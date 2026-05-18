@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio NTE - Senac</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+        
+        :root {
+            --senac-blue: #004587;
+            --senac-orange: #f39200;
+            --senac-light-blue: #00a1e4;
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #f8fafc;
+        }
+
+        .bg-senac-blue { background-color: var(--senac-blue); }
+        .text-senac-blue { color: var(--senac-blue); }
+        .border-senac-blue { border-color: var(--senac-blue); }
+        
+        .bg-senac-orange { background-color: var(--senac-orange); }
+        .text-senac-orange { color: var(--senac-orange); }
+        .border-senac-orange { border-color: var(--senac-orange); }
+
+        .card-stack {
+            perspective: 1000px;
+        }
+
+        .quiz-card {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+            border-left: 6px solid transparent;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateX(5px);
+            border-left-color: var(--senac-orange);
+            background-color: #f0f7ff;
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7;
+            border-color: #22c55e;
+            color: #166534;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .progress-fill {
+            transition: width 0.4s ease-in-out;
+            background: linear-gradient(90deg, var(--senac-blue), var(--senac-light-blue));
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Tela de Capa -->
+    <div id="welcome-screen" class="w-full max-w-md text-center fadeIn">
+        <div class="bg-white rounded-[3rem] p-8 shadow-2xl border-b-8 border-senac-orange relative overflow-hidden">
+            <div class="bg-senac-blue w-24 h-24 rounded-3xl rotate-12 absolute -top-6 -left-6 opacity-10"></div>
+            
+            <div class="relative z-10">
+                <div class="bg-senac-blue inline-block p-4 rounded-2xl mb-6 shadow-lg animate-float">
+                    <span class="text-white font-black text-3xl tracking-tighter">Senac</span>
+                </div>
+                
+                <h1 class="text-4xl font-black text-senac-blue mb-4 leading-tight">Desafio<br><span class="text-senac-orange">NTE</span></h1>
+                
+                <p class="text-slate-600 font-medium mb-8 leading-relaxed">
+                    Teste seus conhecimentos sobre a equipe e as operações do Núcleo de Tecnologias Educacionais.
+                </p>
+
+                <div class="space-y-4 mb-8 text-left">
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div class="bg-blue-100 p-2 rounded-lg text-blue-600">👥</div>
+                        <span class="text-xs font-bold text-slate-700">Conheça a Equipe Técnica</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div class="bg-orange-100 p-2 rounded-lg text-orange-600">🎯</div>
+                        <span class="text-xs font-bold text-slate-700">12 Questões Atualizadas</span>
+                    </div>
+                </div>
+
+                <button id="start-game-btn" class="w-full py-5 bg-senac-blue text-white rounded-2xl font-black text-xl shadow-xl hover:bg-blue-800 transition-all active:scale-95">
+                    INICIAR DESAFIO
+                </button>
+                
+                <p class="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Polo de Educação a Distância - Ceará</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container do Jogo -->
+    <div id="game-container" class="hidden w-full max-w-md relative fadeIn">
+        
+        <div class="flex justify-center mb-4">
+            <div class="bg-senac-blue px-4 py-1 rounded-full shadow-sm">
+                <span class="text-white font-black text-xs tracking-widest">SENAC NTE</span>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-3 px-2">
+            <span id="question-counter" class="text-xs font-bold text-slate-500 uppercase">Pergunta 1/12</span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">Score</span>
+                <span id="score-display" class="bg-senac-orange text-white px-3 py-0.5 rounded-full text-sm font-bold">0</span>
+            </div>
+        </div>
+
+        <div class="w-full bg-slate-200 h-3 rounded-full mb-6 overflow-hidden shadow-inner border border-white">
+            <div id="progress-bar" class="progress-fill h-full" style="width: 0%"></div>
+        </div>
+
+        <div class="card-stack relative min-h-[480px]">
+            <div id="quiz-card" class="quiz-card bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 flex flex-col h-full opacity-0">
+                
+                <div id="content-box" class="flex-grow">
+                    <h2 id="question-text" class="text-xl font-bold text-slate-800 leading-snug mb-8">
+                        Carregando...
+                    </h2>
+                    
+                    <div id="options-grid" class="space-y-3">
+                        <!-- Opções injetadas via JS -->
+                    </div>
+                </div>
+
+                <div id="feedback-area" class="hidden mt-6 pt-6 border-t border-slate-100">
+                    <div id="rationale-box" class="mb-4 p-4 bg-blue-50 border-l-4 border-senac-blue rounded-r-xl text-sm text-slate-700 italic leading-relaxed"></div>
+                    <button id="next-btn" class="w-full py-4 bg-senac-blue text-white rounded-2xl font-bold shadow-lg hover:bg-blue-800 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        Próxima Pergunta
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Resultado -->
+    <div id="result-screen" class="hidden w-full max-w-md text-center fadeIn">
+        <div class="bg-white rounded-[3rem] p-8 shadow-2xl border-4 border-senac-blue relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-senac-orange opacity-10 rounded-full"></div>
+            
+            <div class="relative z-10">
+                <div class="w-20 h-20 bg-senac-orange rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce">
+                    <span class="text-4xl">🏆</span>
+                </div>
+                <h2 class="text-3xl font-black text-senac-blue mb-2">Concluído!</h2>
+                <p class="text-slate-500 font-medium mb-8">O NTE agora não tem segredos para você!</p>
+                
+                <div class="bg-slate-50 rounded-3xl p-6 mb-8 border border-slate-100 shadow-inner">
+                    <p class="text-slate-400 uppercase tracking-widest text-xs font-black mb-2">Sua Pontuação</p>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="final-score" class="text-6xl font-black text-senac-blue">0</span>
+                        <span class="text-2xl font-bold text-senac-orange">pts</span>
+                    </div>
+                    <p id="final-message" class="mt-4 text-sm text-slate-700 font-semibold px-4"></p>
+                </div>
+
+                <button onclick="location.reload()" class="w-full py-5 bg-senac-blue text-white rounded-2xl font-black text-lg shadow-xl hover:bg-blue-800 transition-all active:scale-95">
+                    TENTAR NOVAMENTE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalQuestions = [
+            {
+                q: "Qual profissional atua como Coordenador e Interlocutor EaD no NTE?",
+                options: ["Paulo Rebouças", "Katyuska Melo", "Tearle Pinheiro", "Alana Dutra"],
+                correct: 2,
+                rationale: "Tearle Pinheiro é o Coordenador e o principal ponto de contato (interlocutor) para as questões de Educação a Distância."
+            },
+            {
+                q: "Quem é a profissional responsável pela função de 'Analista Moodle'?",
+                options: ["Katyuska Melo", "Alana Dutra", "Tearle Pinheiro", "Paulo Rebouças"],
+                correct: 1,
+                rationale: "Alana Dutra é a especialista da equipe dedicada à gestão e suporte do Ambiente Virtual de Aprendizagem (Moodle)."
+            },
+            {
+                q: "Katyuska Melo exerce qual função na estrutura técnica do NTE?",
+                options: ["Coordenadora", "Analista Moodle", "Analista Corporativo", "Designer Instrucional"],
+                correct: 2,
+                rationale: "Katyuska Melo está listada no documento como Analista Corporativo dentro da equipe técnica e pedagógica."
+            },
+            {
+                q: "No NTE, quem acumula as funções de Analista Pedagógico e Design Instrucional?",
+                options: ["Alana Dutra", "Katyuska Melo", "Tearle Pinheiro", "Paulo Rebouças"],
+                correct: 3,
+                rationale: "Conforme o documento (pág. 3), Paulo Rebouças é o responsável pelo Design Instrucional e Analista Pedagógico."
+            },
+            {
+                q: "A qual gerência o NTE está diretamente vinculado?",
+                options: ["TI e Infraestrutura", "Educação Profissional", "Diretoria Regional", "Recursos Humanos"],
+                correct: 1,
+                rationale: "O NTE é um braço estratégico da Gerência de Educação Profissional (GEPRO)."
+            },
+            {
+                q: "O NTE presta suporte de Nível 1 para qual oferta específica?",
+                options: ["Cursos Livres", "Faculdade Senac", "Oferta Flexível", "Pós-Graduação"],
+                correct: 2,
+                rationale: "A Oferta Flexível conta com o suporte técnico e pedagógico direto do NTE."
+            },
+            {
+                q: "Qual destas é uma das 9 áreas de atuação do NTE listadas?",
+                options: ["Gestão de Redes Físicas", "Venda de Cursos", "Curadoria de Conteúdos Educacionais", "Manutenção de Hardware"],
+                correct: 2,
+                rationale: "A curadoria e produção de conteúdos educacionais digitais é o item 2 das áreas de atuação."
+            },
+            {
+                q: "Sobre 'Objetos Digitais de Aprendizagem', o NTE é responsável por:",
+                options: ["Apenas a compra", "Análise, projeto e implementação", "Apenas o arquivamento", "Criação de manuais impressos"],
+                correct: 1,
+                rationale: "O ciclo completo de análise, design e implementação de objetos digitais é competência do núcleo."
+            },
+            {
+                q: "A customização de cursos para o mercado é feita através de:",
+                options: ["Parcerias", "Sorteios", "Terceirização Total", "Compra de Patentes"],
+                correct: 0,
+                rationale: "O modelo de parcerias permite que o NTE customize soluções para demandas específicas."
+            },
+            {
+                q: "Qual o papel do NTE sobre novas tecnologias nas unidades?",
+                options: ["Proibir o uso", "Análise para uso pedagógico", "Substituir professores", "Apenas comprar licenças"],
+                correct: 1,
+                rationale: "O NTE valida se uma tecnologia tem valor real para o aprendizado antes de ser adotada."
+            },
+            {
+                q: "A equipe atende prioritariamente às demandas de qual polo?",
+                options: ["Administrativo", "Polo EaD", "Comercial", "Financeiro"],
+                correct: 1,
+                rationale: "O NTE é o suporte operacional e pedagógico fundamental para o Polo de Educação a Distância."
+            },
+            {
+                q: "Como entrar em contato oficial com o núcleo?",
+                options: ["nte@ce.senac.br", "suporte@senac.com", "contato@ead.br", "tecnologia@senac.ce"],
+                correct: 0,
+                rationale: "O e-mail oficial institucional do NTE no Ceará é nte@ce.senac.br."
+            }
+        ];
+
+        // Embaralha as perguntas para cada sessão
+        const questions = originalQuestions.sort(() => Math.random() - 0.5);
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameContainer = document.getElementById('game-container');
+        const startBtn = document.getElementById('start-game-btn');
+        const card = document.getElementById('quiz-card');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreDisplay = document.getElementById('score-display');
+        const progressBar = document.getElementById('progress-bar');
+        const feedbackArea = document.getElementById('feedback-area');
+        const rationaleBox = document.getElementById('rationale-box');
+        const nextBtn = document.getElementById('next-btn');
+
+        startBtn.onclick = () => {
+            welcomeScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            loadQuestion();
+        };
+
+        function loadQuestion() {
+            answered = false;
+            feedbackArea.classList.add('hidden');
+            
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(10px)';
+            
+            setTimeout(() => {
+                const q = questions[currentQuestion];
+                questionCounter.innerText = `Pergunta ${currentQuestion + 1} / ${questions.length}`;
+                questionText.innerText = q.q;
+                progressBar.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+                
+                optionsGrid.innerHTML = '';
+                q.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn w-full p-4 text-left bg-white border border-slate-200 rounded-2xl text-slate-700 font-bold shadow-sm flex items-center justify-between";
+                    btn.innerHTML = `<span>${opt}</span><div class="w-5 h-5 rounded-full border-2 border-slate-200 flex-shrink-0 transition-all"></div>`;
+                    btn.onclick = () => selectOption(index, btn);
+                    optionsGrid.appendChild(btn);
+                });
+
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 300);
+        }
+
+        function selectOption(index, btn) {
+            if (answered) return;
+            answered = true;
+
+            const correctIndex = questions[currentQuestion].correct;
+            const allBtns = optionsGrid.querySelectorAll('button');
+
+            if (index === correctIndex) {
+                score += 10;
+                scoreDisplay.innerText = score;
+                btn.classList.add('correct', 'shadow-green-100');
+                btn.querySelector('div').innerHTML = '<svg fill="white" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>';
+                btn.querySelector('div').classList.add('bg-green-500', 'border-green-500');
+            } else {
+                btn.classList.add('wrong', 'shadow-red-100');
+                btn.querySelector('div').innerHTML = '<svg fill="white" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
+                btn.querySelector('div').classList.add('bg-red-500', 'border-red-500');
+                
+                allBtns[correctIndex].classList.add('border-green-500', 'bg-green-50');
+                allBtns[correctIndex].querySelector('div').classList.add('border-green-500');
+            }
+
+            allBtns.forEach(b => b.disabled = true);
+            
+            rationaleBox.innerHTML = `<strong>Dica do NTE:</strong> ${questions[currentQuestion].rationale}`;
+            feedbackArea.classList.remove('hidden');
+        }
+
+        nextBtn.onclick = () => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        function showResults() {
+            gameContainer.classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+            
+            let msg = '';
+            const totalScore = questions.length * 10;
+            if (score === totalScore) msg = "Incrível! Você conhece cada detalhe e cada integrante do NTE!";
+            else if (score >= totalScore * 0.7) msg = "Excelente! Você tem um ótimo domínio sobre a equipe e as funções do núcleo.";
+            else if (score >= totalScore * 0.5) msg = "Bom desempenho! Revisar os nomes e cargos da página 3 vai te ajudar no gabarito.";
+            else msg = "O NTE é estratégico para o Senac. Que tal ler o documento mais uma vez e tentar de novo?";
+            
+            document.getElementById('final-message').innerText = msg;
+        }
+    </script>
+</body>
+</html>

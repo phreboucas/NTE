@@ -314,7 +314,23 @@
             setTimeout(() => {
                 const q = questions[currentQuestion];
                 questionCounter.innerText = `Pergunta ${currentQuestion + 1} / ${questions.length}`;
-                questionText.innerText = q.q;
+                // Verifica se o enunciado contém nome de analista e injeta foto
+                const analystNames = Object.keys(analystPhotos);
+                let questionHtml = q.q;
+                analystNames.forEach(name => {
+                    if (q.q.includes(name)) {
+                        const imgTag = `<span class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1 mx-1">
+                            <img src="${analystPhotos[name]}" alt="${name}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" />
+                            <strong class="text-senac-blue text-sm">${name}</strong>
+                        </span>`;
+                        questionHtml = questionHtml.replace(name, imgTag);
+                    }
+                });
+                if (questionHtml !== q.q) {
+                    questionText.innerHTML = questionHtml;
+                } else {
+                    questionText.innerText = q.q;
+                }
                 progressBar.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
                 
                 optionsGrid.innerHTML = '';
